@@ -84,9 +84,9 @@ func (a *Adapter) createDatabase() error {
 	var err error
 	var o orm.Ormer
 	if a.driverName == "postgres" {
-		err = orm.RegisterDataBase("casbin", a.driverName, a.dataSourceName + " dbname=postgres")
+		err = orm.RegisterDataBase("create_casbin", a.driverName, a.dataSourceName + " dbname=postgres")
 	} else {
-		err = orm.RegisterDataBase("casbin", a.driverName, a.dataSourceName)
+		err = orm.RegisterDataBase("create_casbin", a.driverName, a.dataSourceName)
 	}
 	if err != nil {
 		return err
@@ -109,6 +109,11 @@ func (a *Adapter) createDatabase() error {
 func (a *Adapter) open() {
 	var err error
 
+	err = orm.RegisterDataBase("default", a.driverName, a.dataSourceName)
+	if err != nil {
+		panic(err)
+	}
+
 	if a.dbSpecified {
 		err = orm.RegisterDataBase("casbin", a.driverName, a.dataSourceName)
 		if err != nil {
@@ -119,17 +124,18 @@ func (a *Adapter) open() {
 			panic(err)
 		}
 
-		//if a.driverName == "postgres" {
-		//	err = orm.RegisterDataBase("default", a.driverName, a.dataSourceName + " dbname=casbin")
-		//} else {
-		//	err = orm.RegisterDataBase("default", a.driverName, a.dataSourceName + "casbin")
-		//}
-		//if err != nil {
-		//	panic(err)
-		//}
+		if a.driverName == "postgres" {
+			err = orm.RegisterDataBase("casbin", a.driverName, a.dataSourceName + " dbname=casbin")
+		} else {
+			err = orm.RegisterDataBase("casbin", a.driverName, a.dataSourceName + "casbin")
+		}
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	a.o = orm.NewOrm()
+	a.o.Using("casbin")
 
 	a.createTable()
 }
@@ -139,14 +145,14 @@ func (a *Adapter) close() {
 }
 
 func (a *Adapter) createTable() {
-	err := orm.RunSyncdb("default", false, true)
+	err := orm.RunSyncdb("casbin", false, true)
 	if err != nil {
 		panic(err)
 	}
 }
 
 func (a *Adapter) dropTable() {
-	err := orm.RunSyncdb("default", true, true)
+	err := orm.RunSyncdb("casbin", true, true)
 	if err != nil {
 		panic(err)
 	}
