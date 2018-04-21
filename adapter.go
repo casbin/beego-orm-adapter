@@ -17,6 +17,7 @@ package beegoormadapter
 import (
 	"errors"
 	"runtime"
+	"strings"
 
 	"github.com/astaxie/beego/orm"
 	"github.com/casbin/casbin/model"
@@ -80,13 +81,21 @@ func NewAdapter(driverName string, dataSourceName string, dbSpecified ...bool) *
 	return a
 }
 
+func (a *Adapter) registerDataBase(aliasName, driverName, dataSource string, params ...int) error {
+	err := orm.RegisterDataBase(aliasName, driverName, dataSource, params...)
+	if err != nil && strings.HasSuffix(err.Error(), "already registered, cannot reuse") {
+		return nil
+	}
+	return err
+}
+
 func (a *Adapter) createDatabase() error {
 	var err error
 	var o orm.Ormer
 	if a.driverName == "postgres" {
-		err = orm.RegisterDataBase("create_casbin", a.driverName, a.dataSourceName + " dbname=postgres")
+		err = a.registerDataBase("create_casbin", a.driverName, a.dataSourceName + " dbname=postgres")
 	} else {
-		err = orm.RegisterDataBase("create_casbin", a.driverName, a.dataSourceName)
+		err = a.registerDataBase("create_casbin", a.driverName, a.dataSourceName)
 	}
 	if err != nil {
 		return err
@@ -109,13 +118,13 @@ func (a *Adapter) createDatabase() error {
 func (a *Adapter) open() {
 	var err error
 
-	err = orm.RegisterDataBase("default", a.driverName, a.dataSourceName)
+	err = a.registerDataBase("default", a.driverName, a.dataSourceName)
 	if err != nil {
 		panic(err)
 	}
 
 	if a.dbSpecified {
-		err = orm.RegisterDataBase("casbin", a.driverName, a.dataSourceName)
+		err = a.registerDataBase("casbin", a.driverName, a.dataSourceName)
 		if err != nil {
 			panic(err)
 		}
@@ -125,9 +134,9 @@ func (a *Adapter) open() {
 		}
 
 		if a.driverName == "postgres" {
-			err = orm.RegisterDataBase("casbin", a.driverName, a.dataSourceName + " dbname=casbin")
+			err = a.registerDataBase("casbin", a.driverName, a.dataSourceName + " dbname=casbin")
 		} else {
-			err = orm.RegisterDataBase("casbin", a.driverName, a.dataSourceName + "casbin")
+			err = a.registerDataBase("casbin", a.driverName, a.dataSourceName + "casbin")
 		}
 		if err != nil {
 			panic(err)
