@@ -153,17 +153,19 @@ func (a *Adapter) close() {
 }
 
 func (a *Adapter) createTable() {
-	err := orm.RunSyncdb("casbin", false, true)
-	if err != nil {
-		panic(err)
-	}
+	//err := orm.RunSyncdb("casbin", false, true)
+	//if err != nil {
+	//	panic(err)
+	//}
 }
 
 func (a *Adapter) dropTable() {
-	err := orm.RunSyncdb("casbin", true, true)
-	if err != nil {
-		panic(err)
-	}
+	//err := orm.RunSyncdb("casbin", true, true)
+	//if err != nil {
+	//	panic(err)
+	//}
+	o := orm.NewOrm()
+	o.Raw("truncate table casbin_rule").Exec()
 }
 
 func loadPolicyLine(line CasbinRule, model model.Model) {
@@ -234,7 +236,7 @@ func savePolicyLine(ptype string, rule []string) CasbinRule {
 // SavePolicy saves policy to database.
 func (a *Adapter) SavePolicy(model model.Model) error {
 	a.dropTable()
-	a.createTable()
+	//a.createTable()
 
 	var lines []CasbinRule
 
