@@ -126,9 +126,10 @@ func TestAdapters(t *testing.T) {
 	// You can also use the following way to use an existing DB "abc":
 	// testSaveLoad(t, "mysql", "root:@tcp(127.0.0.1:3306)/abc", true)
 
-	testSaveLoad(t, "mysql", "root:@tcp(127.0.0.1:3306)/")
-	testSaveLoad(t, "postgres", "user=postgres host=127.0.0.1 port=5432 sslmode=disable")
+	testSaveLoad(t, "mysql", "root:123456@tcp(127.0.0.1:3306)/")
+	//time.Sleep(time.Millisecond * 200)
+	testSaveLoad(t, "postgres", "user=postgres host=172.16.10.113 port=5432 password=123456 sslmode=disable")
 
-	testAutoSave(t, "mysql", "root:@tcp(127.0.0.1:3306)/")
-	testAutoSave(t, "postgres", "user=postgres host=127.0.0.1 port=5432 sslmode=disable")
+	//testAutoSave(t, "mysql", "root:123456@tcp(127.0.0.1:3306)/")
+	//testAutoSave(t, "postgres", "user=postgres host=172.16.10.113 port=5432 password=123456 sslmode=disable")
 }

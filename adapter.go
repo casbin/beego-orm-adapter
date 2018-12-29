@@ -101,7 +101,6 @@ func (a *Adapter) createDatabase() error {
 		return err
 	}
 	o = orm.NewOrm()
-
 	if a.driverName == "postgres" {
 		if 		_, err = o.Raw("CREATE DATABASE casbin").Exec(); err != nil {
 			// 42P04 is	duplicate_database
