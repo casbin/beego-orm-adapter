@@ -6,6 +6,8 @@ go:
   - tip
 
 before_install:
+  - mysql -e 'CREATE DATABASE casbin_test;'
+  - psql -c 'create database casbin_test;' -U postgres
   - go get github.com/mattn/goveralls
 
 script:

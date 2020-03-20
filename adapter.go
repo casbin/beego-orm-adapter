@@ -15,14 +15,10 @@
 package beegoormadapter
 
 import (
-	"errors"
-	"runtime"
-	"strings"
-
 	"github.com/astaxie/beego/orm"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
-	"github.com/lib/pq"
+	"runtime"
 )
 
 type CasbinRule struct {
@@ -38,16 +34,15 @@ type CasbinRule struct {
 
 func init() {
 	orm.RegisterModel(new(CasbinRule))
-
-	orm.RegisterDriver("mysql", orm.DRMySQL)
 }
 
 // Adapter represents the Xorm adapter for policy storage.
 type Adapter struct {
-	driverName     string
-	dataSourceName string
-	dbSpecified    bool
-	o              orm.Ormer
+	driverName      string
+	dataSourceName  string
+	dataSourceAlias string
+	dbSpecified     bool
+	o               orm.Ormer
 }
 
 // finalizer is the destructor for Adapter.
@@ -55,116 +50,64 @@ func finalizer(a *Adapter) {
 }
 
 // NewAdapter is the constructor for Adapter.
-// dbSpecified is an optional bool parameter. The default value is false.
-// It's up to whether you have specified an existing DB in dataSourceName.
-// If dbSpecified == true, you need to make sure the DB in dataSourceName exists.
-// If dbSpecified == false, the adapter will automatically create a DB named "casbin".
-func NewAdapter(driverName string, dataSourceName string, dbSpecified ...bool) *Adapter {
+// dataSourceAlias: Database alias. ORM will use it to switch database.
+// driverName: database driverName.
+// dataSourceName: connection string
+func NewAdapter(dataSourceAlias, driverName, dataSourceName string) (*Adapter, error) {
 	a := &Adapter{}
 	a.driverName = driverName
 	a.dataSourceName = dataSourceName
+	a.dataSourceAlias = dataSourceAlias
 
-	if len(dbSpecified) == 0 {
-		a.dbSpecified = false
-	} else if len(dbSpecified) == 1 {
-		a.dbSpecified = dbSpecified[0]
-	} else {
-		panic(errors.New("invalid parameter: dbSpecified"))
+	err := a.open()
+
+	if err != nil {
+		return nil, err
 	}
-
-	// Open the DB, create it if not existed.
-	a.open()
 
 	// Call the destructor when the object is released.
 	runtime.SetFinalizer(a, finalizer)
 
-	return a
+	return a, nil
 }
 
 func (a *Adapter) registerDataBase(aliasName, driverName, dataSource string, params ...int) error {
 	err := orm.RegisterDataBase(aliasName, driverName, dataSource, params...)
-	if err != nil && strings.HasSuffix(err.Error(), "already registered, cannot reuse") {
-		return nil
-	}
 	return err
 }
 
-func (a *Adapter) createDatabase() error {
+func (a *Adapter) open() error {
 	var err error
-	var o orm.Ormer
-	if a.driverName == "postgres" {
-		err = a.registerDataBase("create_casbin", a.driverName, a.dataSourceName + " dbname=postgres")
-	} else {
-		err = a.registerDataBase("create_casbin", a.driverName, a.dataSourceName)
-	}
+
+	err = a.registerDataBase(a.dataSourceAlias, a.driverName, a.dataSourceName)
 	if err != nil {
 		return err
 	}
-	o = orm.NewOrm()
-
-	if a.driverName == "postgres" {
-		if 		_, err = o.Raw("CREATE DATABASE casbin").Exec(); err != nil {
-			// 42P04 is	duplicate_database
-			if err.(*pq.Error).Code == "42P04" {
-				return nil
-			}
-		}
-	} else {
-		_, err = o.Raw("CREATE DATABASE IF NOT EXISTS casbin").Exec()
-	}
-	return err
-}
-
-func (a *Adapter) open() {
-	var err error
-
-	err = a.registerDataBase("default", a.driverName, a.dataSourceName)
-	if err != nil {
-		panic(err)
-	}
-
-	if a.dbSpecified {
-		err = a.registerDataBase("casbin", a.driverName, a.dataSourceName)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		if err = a.createDatabase(); err != nil {
-			panic(err)
-		}
-
-		if a.driverName == "postgres" {
-			err = a.registerDataBase("casbin", a.driverName, a.dataSourceName + " dbname=casbin")
-		} else {
-			err = a.registerDataBase("casbin", a.driverName, a.dataSourceName + "casbin")
-		}
-		if err != nil {
-			panic(err)
-		}
-	}
 
 	a.o = orm.NewOrm()
-	a.o.Using("casbin")
+	err = a.o.Using(a.dataSourceAlias)
+	if err != nil {
+		return err
+	}
 
-	a.createTable()
+	err = a.createTable()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (a *Adapter) close() {
 	a.o = nil
 }
 
-func (a *Adapter) createTable() {
-	err := orm.RunSyncdb("casbin", false, true)
-	if err != nil {
-		panic(err)
-	}
+func (a *Adapter) createTable() error {
+	return orm.RunSyncdb(a.dataSourceAlias, false, true)
 }
 
-func (a *Adapter) dropTable() {
-	err := orm.RunSyncdb("casbin", true, true)
-	if err != nil {
-		panic(err)
-	}
+func (a *Adapter) dropTable() error {
+	return orm.RunSyncdb(a.dataSourceAlias, true, true)
 }
 
 func loadPolicyLine(line CasbinRule, model model.Model) {
@@ -234,8 +177,15 @@ func savePolicyLine(ptype string, rule []string) CasbinRule {
 
 // SavePolicy saves policy to database.
 func (a *Adapter) SavePolicy(model model.Model) error {
-	a.dropTable()
-	a.createTable()
+	err := a.dropTable()
+	if err != nil {
+		return err
+	}
+
+	err = a.createTable()
+	if err != nil {
+		return err
+	}
 
 	var lines []CasbinRule
 
@@ -253,7 +203,7 @@ func (a *Adapter) SavePolicy(model model.Model) error {
 		}
 	}
 
-	_, err := a.o.InsertMulti(len(lines), lines)
+	_, err = a.o.InsertMulti(len(lines), lines)
 	return err
 }
 
@@ -278,28 +228,28 @@ func (a *Adapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int,
 	line.PType = ptype
 	filter := []string{}
 	filter = append(filter, "p_type")
-	if fieldIndex <= 0 && 0 < fieldIndex + len(fieldValues) {
-		line.V0 = fieldValues[0 - fieldIndex]
+	if fieldIndex <= 0 && 0 < fieldIndex+len(fieldValues) {
+		line.V0 = fieldValues[0-fieldIndex]
 		filter = append(filter, "v0")
 	}
-	if fieldIndex <= 1 && 1 < fieldIndex + len(fieldValues) {
-		line.V1 = fieldValues[1 - fieldIndex]
+	if fieldIndex <= 1 && 1 < fieldIndex+len(fieldValues) {
+		line.V1 = fieldValues[1-fieldIndex]
 		filter = append(filter, "v1")
 	}
-	if fieldIndex <= 2 && 2 < fieldIndex + len(fieldValues) {
-		line.V2 = fieldValues[2 - fieldIndex]
+	if fieldIndex <= 2 && 2 < fieldIndex+len(fieldValues) {
+		line.V2 = fieldValues[2-fieldIndex]
 		filter = append(filter, "v2")
 	}
-	if fieldIndex <= 3 && 3 < fieldIndex + len(fieldValues) {
-		line.V3 = fieldValues[3 - fieldIndex]
+	if fieldIndex <= 3 && 3 < fieldIndex+len(fieldValues) {
+		line.V3 = fieldValues[3-fieldIndex]
 		filter = append(filter, "v3")
 	}
-	if fieldIndex <= 4 && 4 < fieldIndex + len(fieldValues) {
-		line.V4 = fieldValues[4 - fieldIndex]
+	if fieldIndex <= 4 && 4 < fieldIndex+len(fieldValues) {
+		line.V4 = fieldValues[4-fieldIndex]
 		filter = append(filter, "v4")
 	}
-	if fieldIndex <= 5 && 5 < fieldIndex + len(fieldValues) {
-		line.V5 = fieldValues[5 - fieldIndex]
+	if fieldIndex <= 5 && 5 < fieldIndex+len(fieldValues) {
+		line.V5 = fieldValues[5-fieldIndex]
 		filter = append(filter, "v5")
 	}
 
