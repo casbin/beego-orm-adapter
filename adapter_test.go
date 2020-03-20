@@ -18,8 +18,8 @@ import (
 	"log"
 	"testing"
 
-	"github.com/casbin/casbin"
-	"github.com/casbin/casbin/util"
+	"github.com/casbin/casbin/v2"
+	"github.com/casbin/casbin/v2/util"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 )
@@ -37,15 +37,17 @@ func testGetPolicy(t *testing.T, e *casbin.Enforcer, res [][]string) {
 func initPolicy(t *testing.T, driverName string, dataSourceName string, dbSpecified ...bool) {
 	// Because the DB is empty at first,
 	// so we need to load the policy from the file adapter (.CSV) first.
-	e := casbin.NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
-
+	e, err := casbin.NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
+	if err != nil {
+		t.Fatal(err)
+	}
 	a := NewAdapter(driverName, dataSourceName, dbSpecified...)
 	// This is a trick to save the current policy to the DB.
 	// We can't call e.SavePolicy() because the adapter in the enforcer is still the file adapter.
 	// The current policy means the policy in the Casbin enforcer (aka in memory).
-	err := a.SavePolicy(e.GetModel())
+	err = a.SavePolicy(e.GetModel())
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	// Clear the current policy.
@@ -55,7 +57,7 @@ func initPolicy(t *testing.T, driverName string, dataSourceName string, dbSpecif
 	// Load the policy from DB.
 	err = a.LoadPolicy(e.GetModel())
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 }
@@ -70,7 +72,10 @@ func testSaveLoad(t *testing.T, driverName string, dataSourceName string, dbSpec
 	// Create an adapter and an enforcer.
 	// NewEnforcer() will load the policy automatically.
 	a := NewAdapter(driverName, dataSourceName, dbSpecified...)
-	e := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	e, err := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	if err != nil {
+		t.Fatal(err)
+	}
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 }
 
@@ -84,8 +89,10 @@ func testAutoSave(t *testing.T, driverName string, dataSourceName string, dbSpec
 	// Create an adapter and an enforcer.
 	// NewEnforcer() will load the policy automatically.
 	a := NewAdapter(driverName, dataSourceName, dbSpecified...)
-	e := casbin.NewEnforcer("examples/rbac_model.conf", a)
-
+	e, err := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// AutoSave is enabled by default.
 	// Now we disable it.
 	e.EnableAutoSave(false)
