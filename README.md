@@ -10,36 +10,33 @@ Based on [Beego ORM Support](https://beego.me/docs/mvc/model/overview.md), The c
 - Sqlite3: [github.com/mattn/go-sqlite3](https://github.com/mattn/go-sqlite3)
 
 ## Installation
+```bash
+go get github.com/casbin/beego-orm-adapter/v2
+```
 
-    go get github.com/casbin/beego-orm-adapter
-
-## Simple MySQL Example
+## Simple Example
 
 ```go
 package main
 
 import (
-	"github.com/casbin/beego-orm-adapter"
-	"github.com/casbin/casbin"
+    "log"
+	beegoormadapter "github.com/casbin/beego-orm-adapter"
+	"github.com/casbin/casbin/v2"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
 	// Initialize a Beego ORM adapter and use it in a Casbin enforcer:
-	// The adapter will use the MySQL database named "casbin".
-	// If it doesn't exist, the adapter will create it automatically.
-	a := beegoormadapter.NewAdapter("mysql", "mysql_username:mysql_password@tcp(127.0.0.1:3306)/") // Your driver and data source. 
+	a, err := beegoormadapter.NewAdapter("default", "mysql", "mysql_username:mysql_password@tcp(127.0.0.1:3306)/dbname") // Your driver and data source. 
+    if err != nil {
+		log.Fatalln(err)
+	}
 
-	// Or you can use an existing DB "abc" like this:
-	// The adapter will use the table named "casbin_rule".
-	// If it doesn't exist, the adapter will create it automatically.
-	// a := beegoormadapter.NewAdapter("mysql", "mysql_username:mysql_password@tcp(127.0.0.1:3306)/abc", true)
-
-	e := casbin.NewEnforcer("examples/rbac_model.conf", a)
-	
-	// Load the policy from DB.
-	e.LoadPolicy()
-	
+	e, err := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	if err != nil {
+	    log.Fatalln(err)
+    }
 	// Check the permission.
 	e.Enforce("alice", "data1", "read")
 	
@@ -47,45 +44,6 @@ func main() {
 	// e.AddPolicy(...)
 	// e.RemovePolicy(...)
 	
-	// Save the policy back to DB.
-	e.SavePolicy()
-}
-```
-
-## Simple Postgres Example
-
-```go
-package main
-
-import (
-	"github.com/casbin/beego-orm-adapter"
-	"github.com/casbin/casbin"
-	_ "github.com/lib/pq"
-)
-
-func main() {
-	// Initialize a Beego ORM adapter and use it in a Casbin enforcer:
-	// The adapter will use the Postgres database named "casbin".
-	// If it doesn't exist, the adapter will create it automatically.
-	a := beegoormadapter.NewAdapter("postgres", "user=postgres_username password=postgres_password host=127.0.0.1 port=5432 sslmode=disable") // Your driver and data source.
-
-	// Or you can use an existing DB "abc" like this:
-	// The adapter will use the table named "casbin_rule".
-	// If it doesn't exist, the adapter will create it automatically.
-	// a := beegoormadapter.NewAdapter("postgres", "dbname=abc user=postgres_username password=postgres_password host=127.0.0.1 port=5432 sslmode=disable", true)
-
-	e := casbin.NewEnforcer("../examples/rbac_model.conf", a)
-
-	// Load the policy from DB.
-	e.LoadPolicy()
-
-	// Check the permission.
-	e.Enforce("alice", "data1", "read")
-
-	// Modify the policy.
-	// e.AddPolicy(...)
-	// e.RemovePolicy(...)
-
 	// Save the policy back to DB.
 	e.SavePolicy()
 }
