@@ -20,23 +20,23 @@ go get github.com/casbin/beego-orm-adapter/v2
 package main
 
 import (
-    "log"
 	beegoormadapter "github.com/casbin/beego-orm-adapter"
 	"github.com/casbin/casbin/v2"
 	_ "github.com/go-sql-driver/mysql"
+	"log"
 )
 
 func main() {
 	// Initialize a Beego ORM adapter and use it in a Casbin enforcer:
 	a, err := beegoormadapter.NewAdapter("default", "mysql", "mysql_username:mysql_password@tcp(127.0.0.1:3306)/dbname") // Your driver and data source. 
-    if err != nil {
+	if err != nil {
 		log.Fatalln(err)
 	}
 
 	e, err := casbin.NewEnforcer("examples/rbac_model.conf", a)
 	if err != nil {
-	    log.Fatalln(err)
-    }
+		log.Fatalln(err)
+	}
 	// Check the permission.
 	e.Enforce("alice", "data1", "read")
 	
