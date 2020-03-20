@@ -20,10 +20,11 @@ go get github.com/casbin/beego-orm-adapter/v2
 package main
 
 import (
+    "log"
+
     beegoormadapter "github.com/casbin/beego-orm-adapter"
     "github.com/casbin/casbin/v2"
     _ "github.com/go-sql-driver/mysql"
-    "log"
 )
 
 func main() {
