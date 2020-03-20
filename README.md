@@ -20,32 +20,32 @@ go get github.com/casbin/beego-orm-adapter/v2
 package main
 
 import (
+    beegoormadapter "github.com/casbin/beego-orm-adapter"
+    "github.com/casbin/casbin/v2"
+    _ "github.com/go-sql-driver/mysql"
     "log"
-	beegoormadapter "github.com/casbin/beego-orm-adapter"
-	"github.com/casbin/casbin/v2"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
-	// Initialize a Beego ORM adapter and use it in a Casbin enforcer:
-	a, err := beegoormadapter.NewAdapter("default", "mysql", "mysql_username:mysql_password@tcp(127.0.0.1:3306)/dbname") // Your driver and data source. 
+    // Initialize a Beego ORM adapter and use it in a Casbin enforcer:
+    a, err := beegoormadapter.NewAdapter("default", "mysql", "mysql_username:mysql_password@tcp(127.0.0.1:3306)/dbname") // Your driver and data source. 
     if err != nil {
-		log.Fatalln(err)
-	}
-
-	e, err := casbin.NewEnforcer("examples/rbac_model.conf", a)
-	if err != nil {
-	    log.Fatalln(err)
+        log.Fatalln(err)
     }
-	// Check the permission.
-	e.Enforce("alice", "data1", "read")
-	
-	// Modify the policy.
-	// e.AddPolicy(...)
-	// e.RemovePolicy(...)
-	
-	// Save the policy back to DB.
-	e.SavePolicy()
+
+    e, err := casbin.NewEnforcer("examples/rbac_model.conf", a)
+    if err != nil {
+        log.Fatalln(err)
+    }
+    // Check the permission.
+    e.Enforce("alice", "data1", "read")
+
+    // Modify the policy.
+    // e.AddPolicy(...)
+    // e.RemovePolicy(...)
+
+    // Save the policy back to DB.
+    e.SavePolicy()
 }
 ```
 
