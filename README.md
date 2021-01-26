@@ -22,7 +22,7 @@ package main
 import (
     "log"
 
-    beegoormadapter "github.com/casbin/beego-orm-adapter"
+    beegoormadapter "github.com/casbin/beego-orm-adapter/v2"
     "github.com/casbin/casbin/v2"
     _ "github.com/go-sql-driver/mysql"
 )
