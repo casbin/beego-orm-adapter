@@ -136,11 +136,11 @@ func TestAdapters(t *testing.T) {
 	testAutoSave(t, a)
 
 	// Postgres test
-	a, err = NewAdapter("pq", "postgres", "user=postgres host=127.0.0.1 port=5432 sslmode=disable dbname=casbin_test")
+	a, err = NewAdapter("pg", "postgres", "user=postgres host=127.0.0.1 port=5432 sslmode=disable dbname=casbin_test")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	testAutoSave(t, a)
+	testSaveLoad(t, a)
 	testAutoSave(t, a)
 }
