@@ -23,7 +23,7 @@ import (
 
 type CasbinRule struct {
 	Id    int
-	PType string
+	Ptype string
 	V0    string
 	V1    string
 	V2    string
@@ -111,7 +111,7 @@ func (a *Adapter) dropTable() error {
 }
 
 func loadPolicyLine(line CasbinRule, model model.Model) {
-	lineText := line.PType
+	lineText := line.Ptype
 	if line.V0 != "" {
 		lineText += ", " + line.V0
 	}
@@ -152,7 +152,7 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
 func savePolicyLine(ptype string, rule []string) CasbinRule {
 	line := CasbinRule{}
 
-	line.PType = ptype
+	line.Ptype = ptype
 	if len(rule) > 0 {
 		line.V0 = rule[0]
 	}
@@ -217,7 +217,7 @@ func (a *Adapter) AddPolicy(sec string, ptype string, rule []string) error {
 // RemovePolicy removes a policy rule from the storage.
 func (a *Adapter) RemovePolicy(sec string, ptype string, rule []string) error {
 	line := savePolicyLine(ptype, rule)
-	_, err := a.o.Delete(&line, "p_type", "v0", "v1", "v2", "v3", "v4", "v5")
+	_, err := a.o.Delete(&line, "ptype", "v0", "v1", "v2", "v3", "v4", "v5")
 	return err
 }
 
@@ -225,9 +225,9 @@ func (a *Adapter) RemovePolicy(sec string, ptype string, rule []string) error {
 func (a *Adapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int, fieldValues ...string) error {
 	line := CasbinRule{}
 
-	line.PType = ptype
+	line.Ptype = ptype
 	filter := []string{}
-	filter = append(filter, "p_type")
+	filter = append(filter, "ptype")
 	if fieldIndex <= 0 && 0 < fieldIndex+len(fieldValues) {
 		line.V0 = fieldValues[0-fieldIndex]
 		filter = append(filter, "v0")
