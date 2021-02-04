@@ -15,10 +15,11 @@
 package beegoormadapter
 
 import (
-	"github.com/astaxie/beego/orm"
+	"runtime"
+
+	"github.com/beego/beego/v2/client/orm"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
-	"runtime"
 )
 
 type CasbinRule struct {
@@ -46,7 +47,7 @@ type Adapter struct {
 }
 
 // finalizer is the destructor for Adapter.
-func finalizer(a *Adapter) {
+func finalizer(_ *Adapter) {
 }
 
 // NewAdapter is the constructor for Adapter.
@@ -71,7 +72,7 @@ func NewAdapter(dataSourceAlias, driverName, dataSourceName string) (*Adapter, e
 	return a, nil
 }
 
-func (a *Adapter) registerDataBase(aliasName, driverName, dataSource string, params ...int) error {
+func (a *Adapter) registerDataBase(aliasName, driverName, dataSource string, params ...orm.DBOption) error {
 	err := orm.RegisterDataBase(aliasName, driverName, dataSource, params...)
 	return err
 }
@@ -84,11 +85,7 @@ func (a *Adapter) open() error {
 		return err
 	}
 
-	a.o = orm.NewOrm()
-	err = a.o.Using(a.dataSourceAlias)
-	if err != nil {
-		return err
-	}
+	a.o = orm.NewOrmUsingDB(a.dataSourceAlias)
 
 	err = a.createTable()
 	if err != nil {
@@ -208,25 +205,25 @@ func (a *Adapter) SavePolicy(model model.Model) error {
 }
 
 // AddPolicy adds a policy rule to the storage.
-func (a *Adapter) AddPolicy(sec string, ptype string, rule []string) error {
+func (a *Adapter) AddPolicy(_ string, ptype string, rule []string) error {
 	line := savePolicyLine(ptype, rule)
 	_, err := a.o.Insert(&line)
 	return err
 }
 
 // RemovePolicy removes a policy rule from the storage.
-func (a *Adapter) RemovePolicy(sec string, ptype string, rule []string) error {
+func (a *Adapter) RemovePolicy(_ string, ptype string, rule []string) error {
 	line := savePolicyLine(ptype, rule)
 	_, err := a.o.Delete(&line, "p_type", "v0", "v1", "v2", "v3", "v4", "v5")
 	return err
 }
 
 // RemoveFilteredPolicy removes policy rules that match the filter from the storage.
-func (a *Adapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int, fieldValues ...string) error {
+func (a *Adapter) RemoveFilteredPolicy(_ string, ptype string, fieldIndex int, fieldValues ...string) error {
 	line := CasbinRule{}
 
 	line.PType = ptype
-	filter := []string{}
+	filter := make([]string, 0)
 	filter = append(filter, "p_type")
 	if fieldIndex <= 0 && 0 < fieldIndex+len(fieldValues) {
 		line.V0 = fieldValues[0-fieldIndex]
