@@ -15,10 +15,11 @@
 package beegoormadapter
 
 import (
-	"github.com/astaxie/beego/orm"
+	"runtime"
+
+	"github.com/beego/beego/v2/client/orm"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
-	"runtime"
 )
 
 type CasbinRule struct {
@@ -71,7 +72,7 @@ func NewAdapter(dataSourceAlias, driverName, dataSourceName string) (*Adapter, e
 	return a, nil
 }
 
-func (a *Adapter) registerDataBase(aliasName, driverName, dataSource string, params ...int) error {
+func (a *Adapter) registerDataBase(aliasName, driverName, dataSource string, params ...orm.DBOption) error {
 	err := orm.RegisterDataBase(aliasName, driverName, dataSource, params...)
 	return err
 }
@@ -84,11 +85,7 @@ func (a *Adapter) open() error {
 		return err
 	}
 
-	a.o = orm.NewOrm()
-	err = a.o.Using(a.dataSourceAlias)
-	if err != nil {
-		return err
-	}
+	a.o = orm.NewOrmUsingDB(a.dataSourceAlias)
 
 	err = a.createTable()
 	if err != nil {
