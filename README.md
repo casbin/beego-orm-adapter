@@ -1,6 +1,8 @@
 Beego ORM Adapter [![Build Status](https://travis-ci.com/casbin/beego-orm-adapter.svg?branch=master)](https://travis-ci.com/casbin/beego-orm-adapter) [![Coverage Status](https://coveralls.io/repos/github/casbin/beego-orm-adapter/badge.svg?branch=master)](https://coveralls.io/github/casbin/beego-orm-adapter?branch=master) [![Godoc](https://godoc.org/github.com/casbin/beego-orm-adapter?status.svg)](https://godoc.org/github.com/casbin/beego-orm-adapter)
 ====
 
+#### Note: the last version that supports Beego v1 is: https://github.com/casbin/beego-orm-adapter/releases/tag/v2.0.2 . Beego v2 is supported starting from v3.0.0
+
 Beego ORM Adapter is the [Beego ORM](https://beego.me/docs/mvc/model/overview.md) adapter for [Casbin](https://github.com/casbin/casbin). With this library, Casbin can load policy from Beego ORM supported database or save policy to it.
 
 Based on [Beego ORM Support](https://beego.me/docs/mvc/model/overview.md), The current supported databases are:
