@@ -144,3 +144,20 @@ func TestAdapters(t *testing.T) {
 	testSaveLoad(t, a)
 	testAutoSave(t, a)
 }
+
+func TestRemoveFilteredPolicy(t *testing.T) {
+	a, err := NewAdapter("default", "mysql", "root:@tcp(127.0.0.1:3306)/casbin_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	initPolicy(t, a)
+	e, err := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = e.RemoveFilteredPolicy(0, "", "data1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testGetPolicy(t, e, [][]string{{"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
+}
