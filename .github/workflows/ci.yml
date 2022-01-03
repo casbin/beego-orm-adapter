@@ -1,0 +1,53 @@
+name: Go
+
+on:
+  - push
+  - pull_request
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+
+    services: 
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      mysql:
+        image: mysql
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: casbin_test
+        ports:
+          - 3306:3306
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+
+      - uses: actions/checkout@v2
+      - name: Run Unit tests
+        run: go test -v ./...
+
+  semantic-release:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: actions/checkout@v2
+      - name: Run semantic-release
+        if: github.repository == 'casbin/beego-orm-adapter' && github.event_name == 'push'
+        run: |
+          npm install --save-dev semantic-release@17.2.4
+          npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
