@@ -15,11 +15,11 @@
 package beegoormadapter
 
 import (
-	"github.com/casbin/casbin/v2/persist"
 	"log"
 	"testing"
 
 	"github.com/casbin/casbin/v2"
+	"github.com/casbin/casbin/v2/persist"
 	"github.com/casbin/casbin/v2/util"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
@@ -136,7 +136,7 @@ func TestAdapters(t *testing.T) {
 	testAutoSave(t, a)
 
 	// Postgres test
-	a, err = NewAdapter("pg", "postgres", "user=postgres host=127.0.0.1 port=5432 sslmode=disable dbname=casbin_test")
+	a, err = NewAdapter("pg", "postgres", "user=postgres password=postgres host=127.0.0.1 port=5432 sslmode=disable dbname=postgres")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +146,7 @@ func TestAdapters(t *testing.T) {
 }
 
 func TestRemoveFilteredPolicy(t *testing.T) {
-	a, err := NewAdapter("default", "mysql", "root:@tcp(127.0.0.1:3306)/casbin_test")
+	a, err := NewAdapter("remove", "mysql", "root:@tcp(127.0.0.1:3306)/casbin_test")
 	if err != nil {
 		t.Fatal(err)
 	}
