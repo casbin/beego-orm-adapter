@@ -31,7 +31,7 @@ import (
 
 func main() {
     // Initialize a Beego ORM adapter and use it in a Casbin enforcer:
-    a, err := beegoormadapter.NewAdapter("default", "mysql", "mysql_username:mysql_password@tcp(127.0.0.1:3306)/dbname") // Your driver and data source. 
+    a, err := beegoormadapter.NewAdapter("casbin", "mysql", "mysql_username:mysql_password@tcp(127.0.0.1:3306)/dbname") // Your driver and data source. 
     if err != nil {
         log.Fatalln(err)
     }
