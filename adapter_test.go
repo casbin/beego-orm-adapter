@@ -161,3 +161,43 @@ func TestRemoveFilteredPolicy(t *testing.T) {
 	}
 	testGetPolicy(t, e, [][]string{{"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 }
+
+func TestAddPolicies(t *testing.T) {
+	a, err := NewAdapter("addpolicies", "mysql", "root:@tcp(127.0.0.1:3306)/casbin_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	initPolicy(t, a)
+	e, err := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = e.AddPolicies([][]string{{"jack", "data1", "read"}, {"jack2", "data1", "read"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	e.LoadPolicy()
+
+	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}, {"jack", "data1", "read"}, {"jack2", "data1", "read"}})
+}
+
+func TestRemovePolicies(t *testing.T) {
+	a, err := NewAdapter("removepolicies", "mysql", "root:@tcp(127.0.0.1:3306)/casbin_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	initPolicy(t, a)
+	e, err := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = e.RemovePolicies([][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	e.LoadPolicy()
+
+	testGetPolicy(t, e, [][]string{{"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
+}
