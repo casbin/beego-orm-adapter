@@ -146,7 +146,7 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
 	return nil
 }
 
-func savePolicyLine(ptype string, rule []string) CasbinRule {
+func (a *Adapter) savePolicyLine(ptype string, rule []string) CasbinRule {
 	line := CasbinRule{}
 
 	line.Ptype = ptype
@@ -188,14 +188,14 @@ func (a *Adapter) SavePolicy(model model.Model) error {
 
 	for ptype, ast := range model["p"] {
 		for _, rule := range ast.Policy {
-			line := savePolicyLine(ptype, rule)
+			line := a.savePolicyLine(ptype, rule)
 			lines = append(lines, line)
 		}
 	}
 
 	for ptype, ast := range model["g"] {
 		for _, rule := range ast.Policy {
-			line := savePolicyLine(ptype, rule)
+			line := a.savePolicyLine(ptype, rule)
 			lines = append(lines, line)
 		}
 	}
@@ -206,14 +206,14 @@ func (a *Adapter) SavePolicy(model model.Model) error {
 
 // AddPolicy adds a policy rule to the storage.
 func (a *Adapter) AddPolicy(sec string, ptype string, rule []string) error {
-	line := savePolicyLine(ptype, rule)
+	line := a.savePolicyLine(ptype, rule)
 	_, err := a.o.Insert(&line)
 	return err
 }
 
 // RemovePolicy removes a policy rule from the storage.
 func (a *Adapter) RemovePolicy(sec string, ptype string, rule []string) error {
-	line := savePolicyLine(ptype, rule)
+	line := a.savePolicyLine(ptype, rule)
 	_, err := a.o.Delete(&line, "ptype", "v0", "v1", "v2", "v3", "v4", "v5")
 	return err
 }
@@ -264,4 +264,28 @@ func (a *Adapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int,
 
 	_, err := a.o.Delete(&line, filter...)
 	return err
+}
+
+// AddPolicies adds multiple policy rules to the storage.
+func (a *Adapter) AddPolicies(sec string, ptype string, rules [][]string) error {
+	for _, rule := range rules {
+		line := a.savePolicyLine(ptype, rule)
+		_, err := a.o.Insert(&line)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// RemovePolicies removes multiple policy rules from the storage.
+func (a *Adapter) RemovePolicies(sec string, ptype string, rules [][]string) error {
+	for _, rule := range rules {
+		line := a.savePolicyLine(ptype, rule)
+		_, err := a.o.Delete(&line, "ptype", "v0", "v1", "v2", "v3", "v4", "v5")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
