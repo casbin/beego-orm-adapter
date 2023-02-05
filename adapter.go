@@ -278,6 +278,7 @@ func (a *Adapter) AddPolicies(sec string, ptype string, rules [][]string) error 
 	return nil
 }
 
+// RemovePolicies removes multiple policy rules from the storage.
 func (a *Adapter) RemovePolicies(sec string, ptype string, rules [][]string) error {
 	for _, rule := range rules {
 		line := a.savePolicyLine(ptype, rule)
