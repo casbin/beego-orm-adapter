@@ -33,6 +33,13 @@ type CasbinRule struct {
 	V5    string
 }
 
+const CasbinTableName = "casbin_rule"
+
+// TableName Beego ORM using TableNameI interface to Custom table name
+func (model *CasbinRule) TableName() string {
+	return CasbinTableName
+}
+
 func init() {
 	orm.RegisterModel(new(CasbinRule))
 }
@@ -134,7 +141,7 @@ func loadPolicyLine(line CasbinRule, model model.Model) {
 // LoadPolicy loads policy from database.
 func (a *Adapter) LoadPolicy(model model.Model) error {
 	var lines []CasbinRule
-	_, err := a.o.QueryTable("casbin_rule").All(&lines)
+	_, err := a.o.QueryTable(CasbinTableName).All(&lines)
 	if err != nil {
 		return err
 	}

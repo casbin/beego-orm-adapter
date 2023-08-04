@@ -52,6 +52,23 @@ func main() {
 }
 ```
 
+## Custom Table Name
+
+`Beego ORM` using `TableNameI` interface to customize the table name
+
+reference: [custom-table-name](https://github.com/beego/beedoc/blob/master/en-US/mvc/model/models.md#custom-table-name)
+
+You can customize the name of the table by setting `CasbinTableName`
+```golang
+// const CasbinTableName = "casbin_rule"
+const CasbinTableName = "YourTableName"
+
+// TableName Beego ORM using TableNameI interface to Custom table name
+func (model *CasbinRule) TableName() string {
+	return CasbinTableName
+}
+```
+
 ## Getting Help
 
 - [Casbin](https://github.com/casbin/casbin)
