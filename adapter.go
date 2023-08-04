@@ -35,7 +35,7 @@ type CasbinRule struct {
 
 const CasbinTableName = "casbin_rule"
 
-// TableName Beego ORM using TableNameI interface to Custom table name
+// TableName Beego ORM using TableNameI interface to customize table name
 func (model *CasbinRule) TableName() string {
 	return CasbinTableName
 }
