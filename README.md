@@ -58,16 +58,31 @@ func main() {
 
 reference: [custom-table-name](https://github.com/beego/beedoc/blob/master/en-US/mvc/model/models.md#custom-table-name)
 
-You can customize the name of the table by setting `CasbinTableName`
-```golang
-// const CasbinTableName = "casbin_rule"
-const CasbinTableName = "YourTableName"
+You can customize the name of the table by `NewAdapterWithTableName`, and query the custom table name through `GetFullTableName`
 
-// TableName Beego ORM using TableNameI interface to Custom table name
-func (model *CasbinRule) TableName() string {
-	return CasbinTableName
+```golang
+func testCustomTableName(t *testing.T, a *Adapter, expectTableName string) {
+    actualTableName := a.GetFullTableName()
+    if actualTableName != expectTableName {
+        t.Error("actual table name: ", a.GetFullTableName(), ", supposed to be ", expectTableName)
+    }
+}
+
+func TestAdapterCustomTableName(t *testing.T) {
+    a, err := NewAdapterWithTableName("customtablename", "mysql", "root:@tcp(127.0.0.1:3306)/casbin_test", "my_casbin", "prefix_")
+    if err != nil {
+        t.Fatal(err)
+    }
+    testCustomTableName(t, a, "prefix_my_casbin")
+    testSaveLoad(t, a)
+    testAutoSave(t, a)
 }
 ```
+
+**Note:** Currently, only one custom table name is supported, 
+and no other table name should be used after the first use of `NewAdapterWithTableName`
+
+
 
 ## Getting Help
 
