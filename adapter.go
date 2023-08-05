@@ -16,6 +16,7 @@ package beegoormadapter
 
 import (
 	"runtime"
+	"sync"
 
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/casbin/casbin/v2/model"
@@ -31,10 +32,20 @@ type CasbinRule struct {
 	V3    string
 	V4    string
 	V5    string
+
+	tableName   string `orm:"-"`
+	tablePrefix string `orm:"-"`
 }
 
-func init() {
-	orm.RegisterModel(new(CasbinRule))
+const defaultTableName = "casbin_rule"
+
+// TableName Beego ORM using TableNameI interface to customize table name
+// if tableName=="" , adapter will use default tableName "casbin_rule".
+func (model *CasbinRule) TableName() string {
+	if len(model.tableName) == 0 {
+		return model.tablePrefix + defaultTableName
+	}
+	return model.tablePrefix + model.tableName
 }
 
 // Adapter represents the Xorm adapter for policy storage.
@@ -43,6 +54,8 @@ type Adapter struct {
 	dataSourceName  string
 	dataSourceAlias string
 	dbSpecified     bool
+	tablePrefix     string
+	tableName       string
 	o               orm.Ormer
 }
 
@@ -72,6 +85,48 @@ func NewAdapter(dataSourceAlias, driverName, dataSourceName string) (*Adapter, e
 	return a, nil
 }
 
+// NewAdapterWithTableName is the constructor for Adapter.
+// dataSourceAlias: Database alias. ORM will use it to switch database.
+// driverName: database driverName.
+// dataSourceName: connection string
+// tableName: custom table name, if tableName=="" , adapter will use default tableName "casbin_rule".
+// tablePrefix:  using table prefix
+func NewAdapterWithTableName(dataSourceAlias, driverName, dataSourceName, tableName, tablePrefix string) (*Adapter, error) {
+	a := &Adapter{}
+	a.driverName = driverName
+	a.dataSourceName = dataSourceName
+	a.dataSourceAlias = dataSourceAlias
+	a.tableName = tableName
+	a.tablePrefix = tablePrefix
+
+	err := a.open()
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Call the destructor when the object is released.
+	runtime.SetFinalizer(a, finalizer)
+
+	return a, nil
+}
+
+var one sync.Once
+
+func (a *Adapter) registerModel() {
+	one.Do(func() {
+		orm.ResetModelCache()
+		orm.RegisterModel(&CasbinRule{tableName: a.tableName, tablePrefix: a.tablePrefix})
+	})
+}
+
+func (a *Adapter) GetFullTableName() string {
+	if len(a.tableName) != 0 {
+		return a.tablePrefix + a.tableName
+	}
+	return a.tablePrefix + defaultTableName
+}
+
 func (a *Adapter) registerDataBase(aliasName, driverName, dataSource string, params ...orm.DBOption) error {
 	err := orm.RegisterDataBase(aliasName, driverName, dataSource, params...)
 	return err
@@ -87,12 +142,9 @@ func (a *Adapter) open() error {
 
 	a.o = orm.NewOrmUsingDB(a.dataSourceAlias)
 
-	err = a.createTable()
-	if err != nil {
-		return err
-	}
+	a.registerModel()
 
-	return nil
+	return a.createTable()
 }
 
 func (a *Adapter) close() {
@@ -134,7 +186,7 @@ func loadPolicyLine(line CasbinRule, model model.Model) {
 // LoadPolicy loads policy from database.
 func (a *Adapter) LoadPolicy(model model.Model) error {
 	var lines []CasbinRule
-	_, err := a.o.QueryTable("casbin_rule").All(&lines)
+	_, err := a.o.QueryTable(a.GetFullTableName()).All(&lines)
 	if err != nil {
 		return err
 	}
