@@ -1,4 +1,4 @@
-Beego ORM Adapter [![Build Status](https://travis-ci.com/casbin/beego-orm-adapter.svg?branch=master)](https://travis-ci.com/casbin/beego-orm-adapter) [![Coverage Status](https://coveralls.io/repos/github/casbin/beego-orm-adapter/badge.svg?branch=master)](https://coveralls.io/github/casbin/beego-orm-adapter?branch=master) [![Godoc](https://godoc.org/github.com/casbin/beego-orm-adapter?status.svg)](https://godoc.org/github.com/casbin/beego-orm-adapter)
+Beego ORM Adapter [![Go](https://github.com/casbin/beego-orm-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/casbin/beego-orm-adapter/actions/workflows/ci.yml) [![Coverage Status](https://coveralls.io/repos/github/casbin/beego-orm-adapter/badge.svg?branch=master)](https://coveralls.io/github/casbin/beego-orm-adapter?branch=master) [![Godoc](https://godoc.org/github.com/casbin/beego-orm-adapter?status.svg)](https://godoc.org/github.com/casbin/beego-orm-adapter)
 ====
 
 #### Note: the last version that supports Beego v1 is: https://github.com/casbin/beego-orm-adapter/releases/tag/v2.0.2 . Beego v2 is supported starting from v3.0.0
